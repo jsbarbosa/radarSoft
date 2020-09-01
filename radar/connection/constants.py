@@ -1,6 +1,7 @@
-BAUDRATE: int = 9600
+BAUDRATE: int = 115200
 IDN_CODE: str = '*IDN?'
 IDN_VALUE: str = 'Radar-v'
+GET_ANGLE_DISTANCE_COMMAND: str = 'GAD'
 TUPLE_DELIMITER: str = ' '
 TIMEOUT: int = 2
 TEST_TRIES: int = 20

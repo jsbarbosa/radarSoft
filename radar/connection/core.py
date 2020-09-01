@@ -40,16 +40,14 @@ class RadarSerial(Serial):
         return False
 
     def read_angle_distance(self) -> tuple:
-        self.flushInput()
-        self.flush()
-
-        for i in range(2):
+        angle, distance = -1, -1
+        for i in range(5):
+            self.write(constants.GET_ANGLE_DISTANCE_COMMAND.encode())
             try:
                 angle, distance = self.readline().decode().replace('\r\n', '').split(constants.TUPLE_DELIMITER)
-                return int(angle), int(distance)
-            except ValueError as e:
+            except ValueError:
                 pass
-        raise e
+        return int(angle), int(distance)
 
 
 def find_devices() -> list:
