@@ -4,7 +4,7 @@ import sys
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QStatusBar, QHBoxLayout, QFrame, \
-    QSpinBox, QGroupBox, QGridLayout, QLabel
+    QGroupBox, QGridLayout, QLabel
 
 import radar.constants as constants
 from radar.connection.core import find_devices, RadarSerial
@@ -46,6 +46,7 @@ class MainWindow(QMainWindow):
         self._options_frame.layout().addWidget(self._options_frame_groupbox)
 
         self.populate_options_frame_widgets()
+        self.update_shooting_range()
 
     def populate_options_frame_widgets(self):
         layout = self._options_frame_groupbox.layout()
@@ -54,7 +55,13 @@ class MainWindow(QMainWindow):
                 QLabel(info['label']),
                 i, 0
             )
-            widget = eval(info['widget'])
+
+            try:
+                widget = eval(info['widget'])
+            except NameError:
+                exec(f"from PyQt5.QtWidgets import {info['widget'][:info['widget'].find('(')]}", globals())
+                widget = eval(info['widget'])
+
             setattr(self, info['name'], widget)
 
             eval(f"widget.{info['connect']}(self.{info['function']})")
@@ -85,6 +92,7 @@ class MainWindow(QMainWindow):
         self._radar_serial = RadarSerial(device)
         self._find_serial_timer.stop()
         self.start_update_timer()
+        self._radar_canvas.redraw()
 
     def find_connect(self):
         device = self.find_devices()
@@ -103,11 +111,39 @@ class MainWindow(QMainWindow):
             self.origin_spin_box.value()
         )
 
+    def update_point_trace(self):
+        logging.info('update_point_trace has been called')
+        self._radar_canvas.point_trace = self.point_trace_spin_box.value()
+
+    def update_shooting_range(self):
+        logging.info('update_shooting_range has been called')
+        try:
+            min_ = self.min_shooting_range_spin_box.value()
+            max_ = self.max_shooting_range_spin_box.value()
+            self.min_shooting_range_spin_box.setMaximum(max_ - 1)
+            self.max_shooting_range_spin_box.setMinimum(min_ + 1)
+            self._radar_canvas.update_fill_between(min_, max_)
+            if self._radar_serial is not None:
+                self._radar_serial.update_range(min_, max_)
+
+        except AttributeError:
+            pass
+
+    def stop_start(self):
+        if self._radar_serial is not None:
+            self._radar_serial.stop_start()
+
+    def shoot(self):
+        if self._radar_serial is not None:
+            self._radar_serial.shoot()
+
+    def stop_shooting(self):
+        if self._radar_serial is not None:
+            self._radar_serial.stop_shooting()
+
     def resizeEvent(self, event):
         logging.info('resizeEvent has been called')
-        self._radar_canvas.rotate_plot(
-            self.origin_spin_box.value()
-        )
+        self._radar_canvas.redraw()
         super(MainWindow, self).resizeEvent(event)
 
 

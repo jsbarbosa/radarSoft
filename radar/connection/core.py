@@ -49,6 +49,19 @@ class RadarSerial(Serial):
                 pass
         return int(angle), int(distance)
 
+    def update_range(self, r_min: int, r_max: int):
+        self.write(f"{constants.SET_MIN_DISTANCE_COMMAND}{r_min}".encode())
+        self.write(f"{constants.SET_MAX_DISTANCE_COMMAND}{r_max}".encode())
+
+    def stop_start(self):
+        self.write(constants.STOP_COMMAND.encode())
+
+    def shoot(self):
+        self.write(constants.SHOOT_COMMAND.encode())
+
+    def stop_shooting(self):
+        self.write(constants.STOP_SHOOTING_COMMAND.encode())
+
 
 def find_devices() -> list:
     ports = []
